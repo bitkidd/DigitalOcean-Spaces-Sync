@@ -282,7 +282,7 @@
     
     <p>
       <img id="img-spinner" 
-           src="<?php echo plugins_url() . '/' . dirname( plugin_basename(__FILE__) ); ?>/../assets/images/do_logo.svg" alt="DigitalOcean"
+           src="<?php echo plugins_url() . '/' . dirname( plugin_basename(__FILE__) ); ?>/../assets/images/do_logo.png" alt="DigitalOcean"
            style="width: 150px;"/>
     </p>
 
