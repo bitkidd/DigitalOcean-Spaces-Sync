@@ -1,8 +1,8 @@
 <?php
 
 class DOS {
-  
-  private static $instance;
+
+  private        $keys;
   private        $key;
   private        $secret;
   private        $endpoint;
@@ -14,41 +14,46 @@ class DOS {
   private        $upload_url_path;
   private        $upload_path;
 
-	/**
-	 *
-	 * @return DOS
-	 */
-	public static function get_instance() {
-		if ( ! self::$instance ) {
-			self::$instance = new DOS(
-				defined( 'DOS_KEY' ) ? DOS_KEY : null,
-				defined( 'DOS_SECRET' ) ? DOS_SECRET : null,
-        defined( 'DOS_ENDPOINT' ) ? DOS_ENDPOINT : null,
-        defined( 'DOS_CONTAINER' ) ? DOS_CONTAINER : null,
-        defined( 'DOS_STORAGE_PATH' ) ? DOS_STORAGE_PATH : null,
-        defined( 'DOS_STORAGE_FILE_ONLY' ) ? DOS_STORAGE_FILE_ONLY : null,
-        defined( 'DOS_STORAGE_FILE_DELETE' ) ? DOS_STORAGE_FILE_DELETE : null,
-        defined( 'DOS_FILTER' ) ? DOS_FILTER : null,
-        defined( 'UPLOAD_URL_PATH' ) ? UPLOAD_URL_PATH : null,
-        defined( 'UPLOAD_PATH' ) ? UPLOAD_PATH : null
-			);
-		}
-		return self::$instance;
+  /**
+   * Initialize DOS with the constants if defined
+   */
+  public function __construct() {
+    $this->keys = [
+      'dos_key',
+      'dos_secret',
+      'dos_endpoint',
+      'dos_container',
+      'dos_storage_path',
+      'dos_storage_file_only',
+      'dos_storage_file_delete',
+      'dos_filter',
+      'upload_url_path',
+      'upload_path'
+    ];
+
+    foreach ($this->keys as $key) {
+      $trimmed_key = str_replace('dos_', '', $key);
+      $this->{$trimmed_key} = $this->get_setting($key);
+    }
+  }
+
+  /**
+   * Retrive the required key from CONSTANT if is defined
+   * or fron the options if exists
+   *
+   * @param string $setting
+   * @return string|void
+   */
+  public function get_setting($setting)
+  {
+      $upper_setting = strtoupper($setting);
+
+      if (defined($upper_setting) && !empty($upper_setting))
+          return constant($upper_setting);
+      
+      return get_option('dos_key');
   }
   
-	public function __construct( $key, $secret, $container, $endpoint, $storage_path, $storage_file_only, $storage_file_delete, $filter, $upload_url_path, $upload_path ) {
-		$this->key                 = empty($key) ? get_option('dos_key') : null;
-		$this->secret              = empty($secret) ? get_option('dos_secret') : null;
-    $this->endpoint            = empty($endpoint) ? get_option('dos_endpoint') : null;
-    $this->container           = empty($container) ? get_option('dos_container') : null;
-    $this->storage_path        = empty($storage_path) ? get_option('dos_storage_path') : null;
-    $this->storage_file_only   = empty($storage_file_only) ? get_option('dos_storage_file_only') : null;
-    $this->storage_file_delete = empty($storage_file_delete) ? get_option('dos_storage_file_delete') : null;
-    $this->filter              = empty($filter) ? get_option('dos_filter') : null;
-    $this->upload_url_path     = empty($upload_url_path) ? get_option('upload_url_path') : null;
-    $this->upload_path         = empty($upload_path) ? get_option('upload_path') : null;
-	}
-
   // SETUP
   public function setup () {
 
@@ -61,7 +66,7 @@ class DOS {
   private function register_actions () {
 
     add_action('admin_menu', array($this, 'register_menu') );
-    add_action('admin_init', array($this, 'register_settings' ) );
+
     add_action('admin_enqueue_scripts', array($this, 'register_scripts' ) );
     add_action('admin_enqueue_scripts', array($this, 'register_styles' ) );
 
@@ -90,22 +95,6 @@ class DOS {
 
     wp_enqueue_style('dos-flexboxgrid', plugin_dir_url( __FILE__ ) . '/assets/styles/flexboxgrid.min.css' );
     wp_enqueue_style('dos-core-css', plugin_dir_url( __FILE__ ) . '/assets/styles/core.css' );
-
-  }
-
-  public function register_settings () {
-
-    register_setting('dos_settings', 'dos_key');
-    register_setting('dos_settings', 'dos_secret');
-    register_setting('dos_settings', 'dos_endpoint');
-    register_setting('dos_settings', 'dos_container');  
-    register_setting('dos_settings', 'dos_storage_path');  
-    register_setting('dos_settings', 'dos_storage_file_only');
-    register_setting('dos_settings', 'dos_storage_file_delete');
-    register_setting('dos_settings', 'dos_filter');
-    // register_setting('dos_settings', 'dos_debug');
-    register_setting('dos_settings', 'upload_url_path');
-    register_setting('dos_settings', 'upload_path');
 
   }
 
