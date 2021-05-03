@@ -1,7 +1,7 @@
 <?php
 
 class DOS {
-  
+
   private static $instance;
   private        $key;
   private        $secret;
@@ -35,7 +35,7 @@ class DOS {
 		}
 		return self::$instance;
   }
-  
+
 	public function __construct( $key, $secret, $container, $endpoint, $storage_path, $storage_file_only, $storage_file_delete, $filter, $upload_url_path, $upload_path ) {
 		$this->key                 = empty($key) ? get_option('dos_key') : $key;
 		$this->secret              = empty($secret) ? get_option('dos_secret') : $secret;
@@ -77,7 +77,10 @@ class DOS {
     add_filter('wp_generate_attachment_metadata', array($this, 'filter_wp_generate_attachment_metadata'), 20, 1);
     // add_filter('wp_save_image_editor_file', array($this,'filter_wp_save_image_editor_file'), 10, 5 );
     add_filter('wp_unique_filename', array($this, 'filter_wp_unique_filename') );
-    
+
+    //SUPPORT IMAGE EDITION (CROP, RESIZE, ROTATE)
+    add_filter( 'image_make_intermediate_size', 'filter_wp_save_image_editor_file', 10, 1 );
+
   }
 
   public function register_scripts () {
@@ -98,8 +101,8 @@ class DOS {
     register_setting('dos_settings', 'dos_key');
     register_setting('dos_settings', 'dos_secret');
     register_setting('dos_settings', 'dos_endpoint');
-    register_setting('dos_settings', 'dos_container');  
-    register_setting('dos_settings', 'dos_storage_path');  
+    register_setting('dos_settings', 'dos_container');
+    register_setting('dos_settings', 'dos_storage_path');
     register_setting('dos_settings', 'dos_storage_file_only');
     register_setting('dos_settings', 'dos_storage_file_delete');
     register_setting('dos_settings', 'dos_filter');
@@ -124,6 +127,8 @@ class DOS {
     );
 
   }
+
+
 
   // FILTERS
   public function filter_wp_generate_attachment_metadata ($metadata) {
@@ -173,8 +178,17 @@ class DOS {
 
   }
 
+  public function filter_wp_save_image_editor_file($filename) {
+
+    if (!file_exists($filename)) {
+      $this->file_upload($filename);
+    }
+
+    return $filename;
+  }
+
   public function filter_wp_unique_filename ($filename) {
-    
+
     $upload_dir = wp_upload_dir();
     $subdir = $upload_dir['subdir'];
 
@@ -198,13 +212,13 @@ class DOS {
   public function action_add_attachment ($postID) {
 
     if ( wp_attachment_is_image($postID) == false ) {
-  
+
       $file = get_attached_file($postID);
-  
+
       $this->file_upload($file);
-  
+
     }
-  
+
     return true;
 
   }
@@ -215,11 +229,11 @@ class DOS {
     $upload_dir = wp_upload_dir();
 
     if ( wp_attachment_is_image($postID) == false ) {
-  
+
       $file = get_attached_file($postID);
-  
+
       $this->file_delete($file);
-  
+
     } else {
 
       $metadata = wp_get_attachment_metadata($postID);
@@ -281,20 +295,20 @@ class DOS {
         }
     }
     try {
-    
+
       $filesystem = DOS_Filesystem::get_instance($this->key, $this->secret, $this->container, $this->endpoint);
       $filesystem->write('test.txt', 'test');
       $filesystem->delete('test.txt');
       // $exists = $filesystem->has('photo.jpg');
 
-      $this->show_message(__('Connection is successfully established. Save the settings.', 'dos')); 
+      $this->show_message(__('Connection is successfully established. Save the settings.', 'dos'));
       exit();
-  
+
     } catch (Exception $e) {
-  
+
       $this->show_message( __('Connection is not established.','dos') . ' : ' . $e->getMessage() . ($e->getCode() == 0 ? '' : ' - ' . $e->getCode() ), true);
       exit();
-  
+
     }
 
   }
@@ -302,25 +316,25 @@ class DOS {
   public function show_message ($message, $errormsg = false) {
 
     if ($errormsg) {
-  
+
       echo '<div id="message" class="error">';
-  
+
     } else {
-  
+
       echo '<div id="message" class="updated fade">';
-  
+
     }
-  
+
     echo "<p><strong>$message</strong></p></div>";
-  
+
   }
 
   // FILE METHODS
   public function file_path ($file) {
 
-    $path = strlen($this->upload_path) ? str_replace($this->upload_path, '', $file) 
+    $path = strlen($this->upload_path) ? str_replace($this->upload_path, '', $file)
                                        : str_replace(wp_upload_dir()['basedir'], '', $file);
-  
+
     return $this->storage_path . $path;
 
   }
@@ -350,11 +364,11 @@ class DOS {
 
         // remove on upload
         if ( $this->storage_file_only == 1 ) {
-          
+
           unlink($file);
 
         }
-        
+
       }
 
       return true;
@@ -382,11 +396,11 @@ class DOS {
 
         error_log( $e );
 
-      }      
+      }
 
     }
 
-    return $file;   
+    return $file;
 
   }
 
